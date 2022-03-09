@@ -3,6 +3,7 @@ import re
 import nltk
 import sys
 import getopt
+import pickle
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -15,6 +16,21 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
+
+
+def retrievePostingsList(file, pointer):
+    """
+    Given a pointer to determine the location in disk, 
+    retrieves the postings list from that location.
+    """
+    if pointer == -1: # for non-existent terms
+        return []
+
+    with open(file, 'rb') as f:
+        f.seek(pointer)
+        postingsList = pickle.load(f)
+
+    return postingsList
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
