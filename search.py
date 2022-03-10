@@ -7,8 +7,10 @@ import pickle
 import math
 from TermDictionary import TermDictionary
 
+
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
+
 
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
@@ -34,7 +36,7 @@ def retrievePostingsList(file, pointer):
     Given a pointer to determine the location in disk, 
     retrieves the postings list from that location.
     """
-    if pointer == -1: # for non-existent terms
+    if pointer == -1:  # for non-existent terms
         return []
 
     with open(file, 'rb') as f:
@@ -45,14 +47,25 @@ def retrievePostingsList(file, pointer):
 
 
 def getQueryVector(query, dictFile, postingsFile):
+    """
+    returns a vector of the ltc scores of each term
+    """
     tfidf_scores = []
     ltc_scores = []
-    query = query.split(" ")
-    queryTerms = set(query)
-    for term in queryTerms:
-        tfidf_scores.append(get_tf_idf(term, query, dictFile, postingsFile))  # get tf_idf weights according to queryTerms
+    queryTerms = []
+    stemmer = nltk.stem.porter.PorterStemmer()
+
+    query = nltk.tokenize.word_tokenize(query)
+    for term in query:
+        term = stemmer.stem(term.lower())
+        if term in queryTerms:
+            continue
+        else:
+            queryTerms.append(term)
+            tfidf_scores.append(get_tf_idf(term, query, dictFile, postingsFile))  # get tf_idf weights according to queryTerms
     for score in tfidf_scores:
         ltc_scores.append(normalise(score, tfidf_scores))
+
     return ltc_scores
 
 
