@@ -39,5 +39,7 @@ We suggest that we should be graded as follows:
 
 == References ==
 
-<Please list any websites and/or people you consulted with for this
-assignment and state their role>
+Introduction To Information Retrieval - Cambridge University Press (textbook)
+https://docs.python.org/3/library/heapq.html
+https://realpython.com/python-counter/
+https://twiserandom.com/python/__eq__-__ne__-__lt__-__gt__-__ge__-__le__-in-python-a-tutorial/index.html
