@@ -76,18 +76,7 @@ class TermDictionary(object):
 
         except KeyError: # term does not exist in the dictionary
             return 0
-
-
-    def addPointerToCorpusDocIDs(self, pointer):
-        """
-        Adds a list of all docIDs into the dictionary to facilitate NOT operations
-        """
-        self.termInformation["c0rpu5D1r3ct0ry"] = pointer
-
-
-    def getPointerToCorpusDocIDs(self):
-        return self.termInformation["c0rpu5D1r3ct0ry"]
-
+            
     
     def addPointerToDocLengths(self, pointer):
         """

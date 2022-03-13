@@ -112,34 +112,30 @@ def normalise(tf_idf, scores):
 
 
 def cosineScores(query, dictionary, postingsFile):
-    # result = []
-    # stemmer = nltk.stem.porter.PorterStemmer()
-    # queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
-    # qTokenFrequency = Counter(queryTokens)
-
-    # for token in qTokenFrequency.keys():
-    #     w_t_q = 
     """
-    Implementation of FastCosineScore(q) from the textbook.
+    Implementation of CosineScore(q) from the textbook.
     """
-    termDict = dictionary.getTermDict()
     stemmer = nltk.stem.porter.PorterStemmer()
-    totalNumberOfDocs = len(retrievePostingsList(postingsFile, dictionary.getPointerToCorpusDocIDs()))
+    # totalNumberOfDocs = dictionary.getNoOfDocsInCorpus()
+    totalNumberOfDocs = len(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()))
     result = dict.fromkeys(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()).keys(), 0) # in the form of {docID : 1, docID2 : 0.2, ...}
-    # docLengths = retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()) # a dictionary in the form of  {docID : length, docID2 : length, ...}
 
     queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
     qTokenFrequency = Counter(queryTokens) # {"the": 2, "and" : 1}
+    qToken_tfidfWeights = {term : computeTFIDF(term, frequency, dictionary, totalNumberOfDocs) for term, frequency in qTokenFrequency.items()}
+    print(qToken_tfidfWeights)
+    queryLength = math.sqrt(sum([math.pow(weight, 2) for weight in qToken_tfidfWeights.values()]))
+    qTokenNormalisedWeights = {term : weight/queryLength for term, weight in qToken_tfidfWeights.items()}
 
-    for term in qTokenFrequency.keys():
+    for term in qTokenNormalisedWeights.keys():
         pointer = dictionary.getTermPointer(term)
         postings = retrievePostingsList(postingsFile, pointer) # in the form of (docID, TermFreq, skipPointer (to be discarded))
 
         for node in postings:
             docID = node.getDocID()
-            termFreq = node.getTermFrequency()
-            result[docID] += (((1 + math.log10(qTokenFrequency[term])) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term)) * (1 + math.log10(termFreq)))/ docLengths[docID])
-            # result[docID] += ((1 + math.log10(termFreq)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))) / (len(termDict) - 2)
+            termWeight = node.getTermWeight()
+            docVectorLength = node.getVectorLength()
+            result[docID] += qTokenNormalisedWeights[term] * (termWeight/ docVectorLength)
     
     # documents and their weights are now settled.
 
@@ -149,12 +145,19 @@ def cosineScores(query, dictionary, postingsFile):
 
     return " ".join([str(document) for document in output])
 
+
+def computeTFIDF(term, frequency, dictionary, totalNumberOfDocs):
+    df = dictionary.getTermDocFrequency(term)
+    if (df == 0):
+        return 0
+    else:
+        return (1 + math.log10(frequency)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))
+
+
 def generateDocumentObjects(result):
     output = []
     for docID, weight in result.items():
         output.append(Document(docID, weight))
-
-    print(output)
 
     return output
 

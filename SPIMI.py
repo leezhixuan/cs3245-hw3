@@ -4,56 +4,22 @@ import math
 
 from TermDictionary import TermDictionary
 
-# def SPIMIInvert(tokenStream, outputFile, dictFile):
-#     """
-#     This function is akin to the one we've seen the in textbook. Each call to
-#     SPIMIInvert writes a block to disk.
-#     """
-#     # need to store term frequency in each doc
-#     tempDict = {} # Old --> {term : set(docIDs)}, New --> {term : {docID : termFreq, docID2 : termFreq, ...}, term2 : ...}
-#     termDict = TermDictionary(dictFile)
-
-#     for termDocIDPair in tokenStream: # tokenStream is in the form of [(term1, docID), (term2, docID), ...]
-#         term = termDocIDPair[0]
-#         docID = termDocIDPair[1] 
-#         if term not in tempDict:
-#             tempDict[term] = {}
-#             tempDict[term][docID] = 1
-#         else:
-#             # 2 cases when term is already present in the tempDict:
-#             # 1. we have seen its docID
-#             if docID in tempDict[term]:
-#                 tempDict[term][docID]+=1
-
-#             # 2. we have not seen its docID
-#             else:
-#                 tempDict[term][docID] = 1
-
-#     with open(outputFile, 'wb') as f:
-#         for term in sorted(tempDict): # {term : {docID : termFreq, docID2 : termFreq, ...}, term2 : ...}
-#             pointer = f.tell()
-#             pickle.dump(tempDict[term], f) # store the dictionary {docID : termFreq, docID2, termFreq}
-#             # pickle.dump(sorted([(k, v) for k, v in tempDict[term].items()]), f) # store list of (docIDs, termFreq) sorted in ascending order into outputFile
-#             termDict.addTerm(term, len(tempDict[term]), pointer) # update TermDictionary
-    
-#     termDict.save()
-
 def SPIMIInvert(tokenStream, outputFile, dictFile):
     """
     This function is akin to the one we've seen the in textbook. Each call to
     SPIMIInvert writes a block to disk.
     """
-    # need to store term frequency in each doc
-    tempDict = {} # Old --> {term : set(docIDs)}, New --> {term : {docID : [termFreq, vectorLength], docID2 : [termFreq, vectorLength2], ...}, term2 : ...}
+    tempDict = {} # {term : {docID : [termFreq, weight, vectorLength], docID2 : [termFreq, weight, vectorLength2], ...}, term2 : ...}
     termDict = TermDictionary(dictFile)
 
-    for termDocIDLengthTrio in tokenStream: # tokenStream is in the form of [(term1, docID, vectorLength), (term2, docID, vectorLength2), ...]
-        term = termDocIDLengthTrio[0]
-        docID = termDocIDLengthTrio[1] 
-        vectorLength = termDocIDLengthTrio[2] # can have 2 occurence of the same term hence 2 occurence of the vectorLength
+    for termDocIDWeightLengthQuartet in tokenStream: # tokenStream is in the form of [(term1, docID, weight, vectorLength), (term2, docID, weight, vectorLength2), ...]
+        term = termDocIDWeightLengthQuartet[0]
+        docID = termDocIDWeightLengthQuartet[1] 
+        weight = termDocIDWeightLengthQuartet[2]
+        vectorLength = termDocIDWeightLengthQuartet[3] # can have 2 occurence of the same term hence 2 occurence of the vectorLength
         if term not in tempDict:
             tempDict[term] = {}
-            tempDict[term][docID] = [1, vectorLength]
+            tempDict[term][docID] = [1, weight, vectorLength]
         else:
             # 2 cases when term is already present in the tempDict:
             # 1. we have seen its docID
@@ -62,12 +28,12 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
 
             # 2. we have not seen its docID
             else:
-                tempDict[term][docID] = [1, vectorLength]
+                tempDict[term][docID] = [1, weight, vectorLength]
 
     with open(outputFile, 'wb') as f:
-        for term in sorted(tempDict): # {term : {docID : [termFreq, vectorLength], docID2 : [termFreq, vectorLength2], ...}, term2 : ...}
+        for term in sorted(tempDict): # {term : {docID : [termFreq, weight, vectorLength], docID2 : [termFreq, weight, vectorLength2], ...}, term2 : ...}
             pointer = f.tell()
-            pickle.dump(tempDict[term], f) # store the dictionary {docID : [termFreq, vectorLength], docID2 : [termFreq, vectorLength2], ...}
+            pickle.dump(tempDict[term], f) # store the dictionary {docID : [termFreq, weight, vectorLength], docID2 : [termFreq, weight, vectorLength2], ...}
             termDict.addTerm(term, len(tempDict[term]), pointer) # update TermDictionary
     
     termDict.save()
@@ -139,7 +105,8 @@ def mergePostingsDict(dict1, dict2):
     result = {}
 
     for docID in unionOfDocIDs:
-        result[docID] = [getTermFrequency(dict1, docID) + getTermFrequency(dict2, docID), max(getVectorLength(dict1, docID), getVectorLength(dict2, docID))]
+        result[docID] = [getTermFrequency(dict1, docID) + getTermFrequency(dict2, docID), 
+            max(getTermWeight(dict1, docID), getTermWeight(dict2, docID)), max(getVectorLength(dict1, docID), getVectorLength(dict2, docID))]
 
     return result
         
@@ -156,6 +123,20 @@ def getTermFrequency(postingsDict, docID):
     except KeyError:
         return 0
 
+
+def getTermWeight(postingsDict, docID):
+    """
+    A clean implementation of retrieving a value from the dictionary.
+    Returns the weight associated with the key if the key is present.
+    Else, return 0.
+    """
+    try:
+        return postingsDict[docID][1]
+
+    except KeyError:
+        return 0
+
+
 def getVectorLength(postingsDict, docID):
     """
     A clean implementation of retrieving a value from the dictionary.
@@ -163,7 +144,7 @@ def getVectorLength(postingsDict, docID):
     Else, return 0.
     """
     try:
-        return postingsDict[docID][1]
+        return postingsDict[docID][2]
 
     except KeyError:
         return 0

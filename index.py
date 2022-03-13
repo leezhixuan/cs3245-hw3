@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-from collections import Counter
 import shutil
 import nltk
 import sys
@@ -44,7 +43,6 @@ def build_index(in_dir, out_dict, out_postings):
 
 
     for docID in sortedDocIDs:
-        # result = generateTokenStream(in_dir, docID) # returns an array of terms present in that particular doc
         result = generateTokenStreamWithVectorLength(in_dir, docID) # returns an array of terms present in that particular doc
         tokenStream.extend(result[0])
         docLengths[docID] = result[1]
@@ -73,10 +71,6 @@ def build_index(in_dir, out_dict, out_postings):
     
     # add all docIDs into output postings file, and store a pointer in the resultant dictionary.
     with open(out_postings, 'ab') as f: # append to postings file
-        # pointer = f.tell()
-        # result.addPointerToCorpusDocIDs(pointer)
-        # pickle.dump([Node(n) for n in sortedDocIDs], f)
-
         pointer = f.tell()
         result.addPointerToDocLengths(pointer)
         pickle.dump(docLengths, f)
@@ -86,24 +80,6 @@ def build_index(in_dir, out_dict, out_postings):
     os.remove(tempFile)
     shutil.rmtree(workingDirectory, ignore_errors=True)
 
-# def generateTokenStreamWithNormWeights(dir, docID):
-#     """
-#     Given a document and the directory, we stem all terms present in 
-#     the document by stemming them, then output the stemmed terms as an array
-#     """
-#     stemmer = nltk.stem.porter.PorterStemmer()
-
-#     length = 0
-#     terms = []
-#     with open(os.path.join(dir, str(docID))) as file:
-#         sentences = nltk.tokenize.sent_tokenize(file.read())
-#         for sentence in sentences:
-#             words = nltk.tokenize.word_tokenize(sentence)
-#             for word in words:
-#                 length+=1
-#                 terms.append((stemmer.stem(word.lower()), docID)) # stemming + case-folding
-
-#     return (terms, length)  # returns a tuple: (a list of processed terms in the form of  [(term1, docID), (term2, docID), ...], length of document)
 
 def generateTokenStreamWithVectorLength(dir, docID):
     """
@@ -114,7 +90,7 @@ def generateTokenStreamWithVectorLength(dir, docID):
 
     length = 0
     countOfTerms = {} # will be in the form of {term1 : count, term2 : count, ...}
-    terms = []
+
     with open(os.path.join(dir, str(docID))) as file:
         sentences = nltk.tokenize.sent_tokenize(file.read())
         for sentence in sentences:
@@ -123,45 +99,19 @@ def generateTokenStreamWithVectorLength(dir, docID):
                 length+=1
                 stemmedWord = stemmer.stem(word.lower()) # stemming + case-folding
 
-                terms.append(stemmedWord)
                 if stemmedWord in countOfTerms:
                     countOfTerms[stemmedWord] += 1
 
                 else:
                     countOfTerms[stemmedWord] = 1
 
-    lengthOfVector = math.sqrt(sum([count**2 for count in countOfTerms.values()]))
-    # result = {term : count/denominator for term, count in countOfTerms.items()}
+    weightOfTerms = {term : 1 + math.log10(value) for term, value in countOfTerms.items()}
+    lengthOfVector = math.sqrt(sum([count**2 for count in weightOfTerms.values()]))
 
-    output = [(term, docID, lengthOfVector) for term in terms]
+    output = [(term, docID, weight,lengthOfVector) for term, weight in weightOfTerms.items()] # all terms in a particular document, and its associated term weight, and length of vector
                 
 
-    return (output, length)  # returns a tuple: (a list of processed terms in the form of  [(term1, docID, normWeightInThisDoc), (term2, docID, normWeightInThisDoc), ...], length of document)
-
-
-# def getNormalisedWeightsOfTerms(dir, docID):
-#     stemmer = nltk.stem.porter.PorterStemmer()
-
-#     countOfTerms = {} # will be in the form of {term1 : count, term2 : count, ...}
-
-#     with open(os.path.join(dir, str(docID))) as file:
-#         sentences = nltk.tokenize.sent_tokenize(file.read())
-#         for sentence in sentences:
-#             words = nltk.tokenize.word_tokenize(sentence)
-#             for word in words:
-#                 stemmedWord = stemmer.stem(word.lower()) # stemming + case-folding
-
-#                 if stemmedWord in countOfTerms:
-#                     countOfTerms[stemmedWord] += 1
-
-#                 else:
-#                     countOfTerms[stemmedWord] = 1
-    
-#     denominator = math.sqrt(sum([count**2 for count in countOfTerms.values()]))
-
-#     result = {term : count/denominator for term, count in countOfTerms.items()}
-
-#     return result
+    return (output, length)  # returns a tuple: (a list of processed terms in the form of  [(term1, docID, weight, docVectorLength), (term2, docID, docVectorLength), ...], length of document)
 
 
 def convertToPostingNodes(out_postings, file, termDictionary):
@@ -179,7 +129,7 @@ def convertToPostingNodes(out_postings, file, termDictionary):
                 docIDsDict = pickle.load(ref) # loads a dictionary
 
                 # postingsWithSP = insertSkipPointers(sorted(set(docIDs)), len(docIDs)) # insert skip pointers
-                postingsNodes = [Node(docID, docIDsDict[docID][0], docIDsDict[docID][1]) for docID in docIDsDict] # create Nodes
+                postingsNodes = [Node(docID, docIDsDict[docID][0], docIDsDict[docID][1], docIDsDict[docID][2]) for docID in docIDsDict] # create Nodes
                 newPointer = output.tell() # new pointer location
                 pickle.dump(postingsNodes, output)
                 termDictionary.updatePointerToPostings(term, newPointer) # term entry is now --> term : [docFreq, pointer]
