@@ -116,7 +116,6 @@ def cosineScores(query, dictionary, postingsFile):
     Implementation of CosineScore(q) from the textbook.
     """
     stemmer = nltk.stem.porter.PorterStemmer()
-    # totalNumberOfDocs = dictionary.getNoOfDocsInCorpus()
     totalNumberOfDocs = len(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()))
     result = dict.fromkeys(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()).keys(), 0) # in the form of {docID : 1, docID2 : 0.2, ...}
 
