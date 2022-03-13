@@ -128,7 +128,6 @@ def cosineScores(query, dictionary, postingsFile):
     result = dict.fromkeys(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()).keys(), 0) # in the form of {docID : 1, docID2 : 0.2, ...}
     # docLengths = retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()) # a dictionary in the form of  {docID : length, docID2 : length, ...}
 
-    docLengths = getDocLengths(termDict)
     queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
     qTokenFrequency = Counter(queryTokens) # {"the": 2, "and" : 1}
 
@@ -139,8 +138,8 @@ def cosineScores(query, dictionary, postingsFile):
         for node in postings:
             docID = node.getDocID()
             termFreq = node.getTermFrequency()
-            # result[docID] += (((1 + math.log10(qTokenFrequency[term])) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term)) * (1 + math.log10(termFreq)))/ docLengths[docID])
-            result[docID] += ((1 + math.log10(termFreq)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))) / (len(termDict) - 2)
+            result[docID] += (((1 + math.log10(qTokenFrequency[term])) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term)) * (1 + math.log10(termFreq)))/ docLengths[docID])
+            # result[docID] += ((1 + math.log10(termFreq)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))) / (len(termDict) - 2)
     
     # documents and their weights are now settled.
 
