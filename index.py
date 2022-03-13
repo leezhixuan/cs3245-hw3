@@ -41,6 +41,7 @@ def build_index(in_dir, out_dict, out_postings):
     tokenStream = []
     docLengths = {} # {docID : length, docID2 : length, ...}, to be added dumped into the postings file with its pointer stored in the final termDictionary file
 
+
     for docID in sortedDocIDs:
         result = generateTokenStream(in_dir, docID) # returns an array of terms present in that particular doc
         tokenStream.extend(result[0])

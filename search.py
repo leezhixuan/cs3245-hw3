@@ -1,10 +1,13 @@
 #!/usr/bin/python3
-import re
 import nltk
 import sys
 import getopt
 import pickle
 import math
+import heapq
+
+from collections import Counter
+from Document import Document
 from TermDictionary import TermDictionary
 
 
@@ -22,13 +25,20 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     dictFile = TermDictionary(dict_file)
     dictFile.load()  # load term information into dictFile from dict_file
 
+    # with open(queries_file, 'r') as queryFile:
+    #     with open(results_file, 'w') as resultFile:
+    #         allResult = []
+    #         for query in queryFile:
+    #             queryVector = getQueryVector(query, dictFile, postings_file)
+    #         outputResult = "\n".join(allResult)  # to output all result onto a new line.
+    #         resultFile.write(outputResult)
+
     with open(queries_file, 'r') as queryFile:
         with open(results_file, 'w') as resultFile:
-            allResult = []
+            
             for query in queryFile:
-                queryVector = getQueryVector(query, dictFile, postings_file)
-            outputResult = "\n".join(allResult)  # to output all result onto a new line.
-            resultFile.write(outputResult)
+                result = cosineScores(query, dictFile, postings_file)
+                resultFile.write(result + "\n")
 
 
 def retrievePostingsList(file, pointer):
@@ -99,6 +109,55 @@ def normalise(tf_idf, scores):
     result = math.sqrt(total)
 
     return 1/result * tf_idf
+
+
+def cosineScores(query, dictionary, postingsFile):
+    # result = []
+    # stemmer = nltk.stem.porter.PorterStemmer()
+    # queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
+    # qTokenFrequency = Counter(queryTokens)
+
+    # for token in qTokenFrequency.keys():
+    #     w_t_q = 
+    """
+    Implementation of FastCosineScore(q) from the textbook.
+    """
+    termDict = dictionary.getTermDict()
+    stemmer = nltk.stem.porter.PorterStemmer()
+    totalNumberOfDocs = len(retrievePostingsList(postingsFile, dictionary.getPointerToCorpusDocIDs()))
+    result = dict.fromkeys(retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()).keys(), 0) # in the form of {docID : 1, docID2 : 0.2, ...}
+    # docLengths = retrievePostingsList(postingsFile, dictionary.getPointerToDocLengths()) # a dictionary in the form of  {docID : length, docID2 : length, ...}
+
+    docLengths = getDocLengths(termDict)
+    queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
+    qTokenFrequency = Counter(queryTokens) # {"the": 2, "and" : 1}
+
+    for term in qTokenFrequency.keys():
+        pointer = dictionary.getTermPointer(term)
+        postings = retrievePostingsList(postingsFile, pointer) # in the form of (docID, TermFreq, skipPointer (to be discarded))
+
+        for node in postings:
+            docID = node.getDocID()
+            termFreq = node.getTermFrequency()
+            # result[docID] += (((1 + math.log10(qTokenFrequency[term])) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term)) * (1 + math.log10(termFreq)))/ docLengths[docID])
+            result[docID] += ((1 + math.log10(termFreq)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))) / (len(termDict) - 2)
+    
+    # documents and their weights are now settled.
+
+    documentObjects = generateDocumentObjects(result)
+
+    output = heapq.nlargest(10, documentObjects)
+
+    return " ".join([str(document) for document in output])
+
+def generateDocumentObjects(result):
+    output = []
+    for docID, weight in result.items():
+        output.append(Document(docID, weight))
+
+    print(output)
+
+    return output
 
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
