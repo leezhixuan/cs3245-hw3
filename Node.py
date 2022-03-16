@@ -9,7 +9,7 @@ class Node(object):
         self.termWeight = termWeight
         self.vectorDocLength = vectorDocLength
 
-    
+
     def getTermFrequency(self):
         return self.termFrequency
 
