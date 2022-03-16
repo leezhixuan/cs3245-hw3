@@ -106,9 +106,9 @@ def generateTokenStreamWithVectorLength(dir, docID):
                     countOfTerms[stemmedWord] = 1
 
     weightOfTerms = {term : 1 + math.log10(value) for term, value in countOfTerms.items()}
-    lengthOfVector = math.sqrt(sum([count**2 for count in weightOfTerms.values()]))
+    lengthOfDocVector = math.sqrt(sum([count**2 for count in weightOfTerms.values()]))
 
-    output = [(term, docID, weight,lengthOfVector) for term, weight in weightOfTerms.items()] # all terms in a particular document, and its associated term weight, and length of vector
+    output = [(term, docID, weight,lengthOfDocVector) for term, weight in weightOfTerms.items()] # all terms in a particular document, and its associated term weight, and length of vector
                 
 
     return (output, length)  # returns a tuple: (a list of processed terms in the form of  [(term1, docID, weight, docVectorLength), (term2, docID, docVectorLength), ...], length of document)
@@ -126,9 +126,8 @@ def convertToPostingNodes(out_postings, file, termDictionary):
             for term in termDict:
                 pointer = termDict[term][1] #retrieves pointer associated to the term
                 ref.seek(pointer)
-                docIDsDict = pickle.load(ref) # loads a dictionary
+                docIDsDict = pickle.load(ref) # loads a dictionary of docIDs
 
-                # postingsWithSP = insertSkipPointers(sorted(set(docIDs)), len(docIDs)) # insert skip pointers
                 postingsNodes = [Node(docID, docIDsDict[docID][0], docIDsDict[docID][1], docIDsDict[docID][2]) for docID in docIDsDict] # create Nodes
                 newPointer = output.tell() # new pointer location
                 pickle.dump(postingsNodes, output)

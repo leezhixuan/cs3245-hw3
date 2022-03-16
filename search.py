@@ -133,7 +133,7 @@ def cosineScores(query, dictionary, postingsFile):
         for node in postings:
             docID = node.getDocID()
             termWeight = node.getTermWeight()
-            docVectorLength = node.getVectorLength()
+            docVectorLength = node.getVectorDocLength()
             result[docID] += qTokenNormalisedWeights[term] * (termWeight/ docVectorLength)
     
     # documents and their weights are now settled.

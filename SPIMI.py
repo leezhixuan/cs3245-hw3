@@ -16,10 +16,10 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
         term = termDocIDWeightLengthQuartet[0]
         docID = termDocIDWeightLengthQuartet[1] 
         weight = termDocIDWeightLengthQuartet[2]
-        vectorLength = termDocIDWeightLengthQuartet[3] # can have 2 occurence of the same term hence 2 occurence of the vectorLength
+        vectorDocLength = termDocIDWeightLengthQuartet[3] # can have 2 occurence of the same term hence 2 occurence of the vectorLength
         if term not in tempDict:
             tempDict[term] = {}
-            tempDict[term][docID] = [1, weight, vectorLength]
+            tempDict[term][docID] = [1, weight, vectorDocLength]
         else:
             # 2 cases when term is already present in the tempDict:
             # 1. we have seen its docID
@@ -28,7 +28,7 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
 
             # 2. we have not seen its docID
             else:
-                tempDict[term][docID] = [1, weight, vectorLength]
+                tempDict[term][docID] = [1, weight, vectorDocLength]
 
     with open(outputFile, 'wb') as f:
         for term in sorted(tempDict): # {term : {docID : [termFreq, weight, vectorLength], docID2 : [termFreq, weight, vectorLength2], ...}, term2 : ...}
@@ -106,7 +106,7 @@ def mergePostingsDict(dict1, dict2):
 
     for docID in unionOfDocIDs:
         result[docID] = [getTermFrequency(dict1, docID) + getTermFrequency(dict2, docID), 
-            max(getTermWeight(dict1, docID), getTermWeight(dict2, docID)), max(getVectorLength(dict1, docID), getVectorLength(dict2, docID))]
+            max(getTermWeight(dict1, docID), getTermWeight(dict2, docID)), max(getVectorDocLength(dict1, docID), getVectorDocLength(dict2, docID))]
 
     return result
         
@@ -137,7 +137,7 @@ def getTermWeight(postingsDict, docID):
         return 0
 
 
-def getVectorLength(postingsDict, docID):
+def getVectorDocLength(postingsDict, docID):
     """
     A clean implementation of retrieving a value from the dictionary.
     Returns the length of (document) vector associated with the key if the key is present.
