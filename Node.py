@@ -27,7 +27,7 @@ class Node(object):
 
 
     def __repr__(self):
-        return "(" + str(self.docID) + ", " + str(self.termFrequency) + ", " + str(self.normWeight) + ")"
+        return "(" + str(self.docID) + ", " + str(self.termFrequency) + ", " + str(self.termWeight) + ", " + str(self.vectorLength) +")"
 
 
     def getDocID(self):
