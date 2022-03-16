@@ -1,6 +1,6 @@
 class Node(object):
     """
-    Node is a class that stores a docID and a skip pointer to the next index to "skip" to.
+    Node is a class that stores a docID, the term frequency, the term weight, and the vector length.
     """
 
     def __init__(self, docID, termFrequency, termWeight, vectorLength):
@@ -9,7 +9,7 @@ class Node(object):
         self.termWeight = termWeight
         self.vectorLength = vectorLength
 
-    
+
     def getTermFrequency(self):
         return self.termFrequency
 
