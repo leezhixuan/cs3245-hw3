@@ -54,7 +54,7 @@ def build_index(in_dir, out_dict, out_postings):
             SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
             fileID+=1
             count = 0 # reset counter
-            tokenStream = [] #clear tokenStream
+            tokenStream = [] # clear tokenStream
     
     if count > 0: # in case the number of files isnt a multiple of the limit set
         outputPostingsFile = workingDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
@@ -69,7 +69,7 @@ def build_index(in_dir, out_dict, out_postings):
 
     convertToPostingNodes(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
-    # add all docIDs into output postings file, and store a pointer in the resultant dictionary.
+    # add docLengths into output postings file, and store a pointer in the resultant dictionary.
     with open(out_postings, 'ab') as f: # append to postings file
         pointer = f.tell()
         result.addPointerToDocLengths(pointer)
@@ -83,8 +83,10 @@ def build_index(in_dir, out_dict, out_postings):
 
 def generateTokenStreamWithVectorLength(dir, docID):
     """
-    Given a document and the directory, we stem all terms present in 
-    the document by stemming them, then output the stemmed terms as an array
+    Given a document and the directory, return a tuple of 2 items: first is a list of (term, docID, weight, lengthofDocVector).
+    Second is the length of the document. 
+    We apply case-folding + stemming to all tokens encountered.
+    Weight of a term simply 1 + log10(termFrequency), with no idf component.
     """
     stemmer = nltk.stem.porter.PorterStemmer()
 
@@ -105,7 +107,7 @@ def generateTokenStreamWithVectorLength(dir, docID):
                 else:
                     countOfTerms[stemmedWord] = 1
 
-    weightOfTerms = {term : 1 + math.log10(value) for term, value in countOfTerms.items()}
+    weightOfTerms = {term : 1 + math.log10(value) for term, value in countOfTerms.items()} # no idf
     lengthOfDocVector = math.sqrt(sum([count**2 for count in weightOfTerms.values()]))
 
     output = [(term, docID, weight,lengthOfDocVector) for term, weight in weightOfTerms.items()] # all terms in a particular document, and its associated term weight, and length of vector
@@ -116,15 +118,17 @@ def generateTokenStreamWithVectorLength(dir, docID):
 
 def convertToPostingNodes(out_postings, file, termDictionary):
     """
-    Add skip pointers to the postings lists present in file, update pointers in termDictionary and
-    save the new postings lists (with skip pointers) into out_postings
+    We convert all postings in the postings file into Node objects,
+    where each Node object stores a docID, the term frequency in document <docID>, 
+    the term weight, and the vector length of document <docID>.
+    These Node objects are saved into out_postings.
     """
     with open(file, 'rb') as ref:
         with open(out_postings, 'wb') as output:
 
             termDict = termDictionary.getTermDict()
             for term in termDict:
-                pointer = termDict[term][1] #retrieves pointer associated to the term
+                pointer = termDict[term][1] # retrieves pointer associated to the term
                 ref.seek(pointer)
                 docIDsDict = pickle.load(ref) # loads a dictionary of docIDs
 

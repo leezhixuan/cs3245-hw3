@@ -22,11 +22,11 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
             tempDict[term][docID] = [1, weight, vectorDocLength]
         else:
             # 2 cases when term is already present in the tempDict:
-            # 1. we have seen its docID
+            #   1. we have seen its docID
             if docID in tempDict[term]:
                 tempDict[term][docID][0]+=1
 
-            # 2. we have not seen its docID
+            #   2. we have not seen its docID
             else:
                 tempDict[term][docID] = [1, weight, vectorDocLength]
 
@@ -80,7 +80,7 @@ def mergeDictsAndPostings(dictFile1, postingsFile1, dictFile2, postingsFile2, ou
             postings1 = retrievePostingsDict(postingsFile1, dict1.getTermPointer(key)) #retrieves postingsDict if term is present, else {}
             postings2 = retrievePostingsDict(postingsFile2, dict2.getTermPointer(key))
             mergedPostingsDict = mergePostingsDict(postings1, postings2)
-            # sortedMergePostings = sorted(postings1.union(postings2)) #merging then sorting docIDs
+            
             pointer = output.tell()
             termDict.addTerm(key, len(mergedPostingsDict), pointer)
             pickle.dump(mergedPostingsDict, output) # storing a dictionary of postings: {docID : termFreq, docID2 : termFreq, ...}
