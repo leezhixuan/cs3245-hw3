@@ -8,6 +8,10 @@ class Document(object):
         self.docID = docID
         self.weight = weight
 
+    
+    def getWeight(self):
+        return self.weight
+
 
     def __repr__(self):
         return "[" + str(self.docID) + ", " + str(self.weight) + "]"

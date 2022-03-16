@@ -76,7 +76,8 @@ def cosineScores(query, dictionary, postingsFile):
 
     documentObjects = generateDocumentObjects(result)
 
-    output = heapq.nlargest(10, documentObjects) # get the top 10 highest ranking solution.
+    # output = heapq.nlargest(10, documentObjects) # get the top 10 highest ranking solution.
+    output = extractTop10(documentObjects)
 
     return " ".join([str(document) for document in output])
 
@@ -86,7 +87,7 @@ def computeTFIDF(term, frequency, dictionary, totalNumberOfDocs):
     Takes in a term and computes the tf-idf of a term.
     """
     df = dictionary.getTermDocFrequency(term)
-    if (df == 0):
+    if (frequency == 0 or df == 0):
         return 0
     else:
         return (1 + math.log10(frequency)) * math.log10(totalNumberOfDocs/dictionary.getTermDocFrequency(term))
@@ -102,6 +103,17 @@ def generateDocumentObjects(result):
         output.append(Document(docID, weight))
 
     return output
+
+def extractTop10(documentObjects):
+    """
+    Takes in a list of Document objects and extracts 10 highest scoring documents.
+    Less than 10 Document objects will be outputted if there are documents with score = 0
+    amongst the supposed 10 highest.
+    """
+
+    temp = heapq.nlargest(10, documentObjects) # a list of 10 highest scoring document
+
+    return filter(lambda document : (document.getWeight() > 0), temp)
 
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None

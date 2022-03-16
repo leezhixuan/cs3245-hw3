@@ -9,7 +9,7 @@ import math
 
 from TermDictionary import TermDictionary
 from Node import Node
-from SPIMI import *
+from SPIMI import SPIMIInvert, binaryMerge
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
