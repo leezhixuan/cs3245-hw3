@@ -30,7 +30,6 @@ Finally, we load the TermDictionary up so that we can add a pointer that points 
 length of all documents in the corpus. We then save the information in TermDictionary onto the disk. At this point, 
 we delete the temporary file that was used to store postings, as well as the temporary directory used by the SPIMI process.
 
-
 The final format of each postings list is:
 [Node1, Node2, Node2, …], where each Node contains a docID, the term frequency in document <docID>, 
 the term weight, and the vector length of document <docID>.
