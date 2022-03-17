@@ -60,7 +60,7 @@ def cosineScores(query, dictionary, postingsFile):
     qTokenFrequency = Counter(queryTokens) # qTokenFrequency will be in the form of {"the": 2, "and" : 1} if the query is "the and the".
     qToken_tfidfWeights = {term : computeTFIDF(term, frequency, dictionary, totalNumberOfDocs) for term, frequency in qTokenFrequency.items()}
     queryLength = math.sqrt(sum([math.pow(weight, 2) for weight in qToken_tfidfWeights.values()]))
-    qTokenNormalisedWeights = {term : weight/queryLength for term, weight in qToken_tfidfWeights.items()}
+    qTokenNormalisedWeights = {term : weight / queryLength for term, weight in qToken_tfidfWeights.items()}
 
     for term in qTokenNormalisedWeights.keys():
         pointer = dictionary.getTermPointer(term)

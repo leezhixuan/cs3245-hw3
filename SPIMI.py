@@ -107,6 +107,8 @@ def mergePostingsDict(dict1, dict2):
     for docID in unionOfDocIDs:
         result[docID] = [getTermFrequency(dict1, docID) + getTermFrequency(dict2, docID), 
             max(getTermWeight(dict1, docID), getTermWeight(dict2, docID)), max(getVectorDocLength(dict1, docID), getVectorDocLength(dict2, docID))]
+            # max() is used because of the way we process files; we process documents fully, and 1024 at a time. Thus, no 2 dictionary file will contain the same
+            # docIDs. max() is used because we don't know which of the 2 dictionary contains a particular docID.
 
     return result
         

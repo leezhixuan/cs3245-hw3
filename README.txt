@@ -10,21 +10,46 @@ We're using Python Version 3.8.3 for this assignment.
 == General Notes about this assignment ==
 - Indexing -
 
-The final format of each posting list is:
-[Node1, Node2, Node2, …], where each Node contains a docID, the term frequency, and the term weight.
+We modified the SPIMI method of indexing terms in the corpus. Like in HW2, a temporary working directory is 
+specially set up to store intermediate files during the SPIMI process. The maximum number of files that we 
+process before making the calling SPIMIInvert() is 1024. For every document in the corpus, we make a call 
+to generateTokenStreamWithVectorLength(). In this method, we keep a counter for every term encountered as well 
+as stem and apply case-folding to every term. We also calculate their weights using 1 + log10(termFrequency), 
+without idf. By determining the weights of each term in the document, we can calculate the vector length of 
+the document. In the end, we will be able to output a tuple of 2 elements: the first being a tuple of term, docID, 
+weight,lengthOfDocVector and the second being the length of the document.
+
+After all the documents in the corpus have been processed. We make a call to binaryMerge() and it is in charge of 
+merging all the existing "dictionary" and "postings" files that have been created into a single "dictionary" and 
+"postings" file. 
+
+Next, we convert all postings into Nodes objects to store information neatly. We store these Node objects 
+into the "out_postings" file.
+
+Finally, we load the TermDictionary up so that we can add a pointer that points to the dictionary which stores the 
+length of all documents in the corpus. We then save the information in TermDictionary onto the disk. At this point, 
+we delete the temporary file that was used to store postings, as well as the temporary directory used by the SPIMI process.
+
+
+The final format of each postings list is:
+[Node1, Node2, Node2, …], where each Node contains a docID, the term frequency in document <docID>, 
+the term weight, and the vector length of document <docID>.
 
 The dictionary in the TermDictionary object will be in the form of:
-{term1: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "c0rpu5D1r3ct0ry": [all docIDs]}
+{term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "d0cum3ntL3ngth": pointer}
 
 - Searching -
 
-We preprocess terms in queries the same way we process words in the corpus. We do so in the CosineScores()
-function, where we also calculate the score of the terms in the query compared to the corpus documents,
-based on lnc.ltc (in terms of SMART notation of ddd.qqq). This means we determined the log tf and idf with
-cosine normalisation for queries, and log tf, cosine normalisation, with no idf for documents. For each term,
-we obtained this score and then summed the entire score for each document. We use a maximum heap to rank
-the documents after determining the score due to the favourable efficiency of the data structure. Thereafter,
-we output the top ten documents (ranked based on score) into the output document.
+We preprocess terms in queries the same way we preprocess words in the corpus (only stemming and case-folding) so that we
+will be able to search effectively. In CosineScores(), we also calculate score of each document based on lnc.ltc 
+(in terms of SMART notation of ddd.qqq). As such, weights of query terms are determined using (1 + log10(tf)) * idf, with cosine normalisation.
+For each query term, we add (normalisedQueryTermWeight * normalisedDocuementTermWeight) to the score of every document in its postings list. 
+At the end, every document would have obtained a score. The higher the score, the more relevant that particular document is to the query.
+
+In order to rank and output the top 10 most relevant documents to the query, we utilise the heapq library as well as the Document class.
+The Document class helps to facilitate ranking. As such, we convert every document-score pair into Document objects and pass the array
+of Document objects into heapq.extract10(). Then, we filter away any document with a score = 0 that somehow managed to make it into the top 10.
+Thereafter, we write the top 10 results (if any) into the output file, each on a new line.
 
 
 == Files included with this submission ==
@@ -34,10 +59,11 @@ README.txt - (this), general information about the submission.
 index.py - main running code, indexes documents in the corpus into a postings file via SPIMI, and creates
 a dictionary file.
 
-search.py - main running code, searches for postings of terms based on queries and outputs the top ten
+search.py - main running code, searches for postings of terms based on queries and outputs the top ten (or less)
 results, ranked by lnc.ltc, to a file.
 
-Node.py - Node is a class that stores a docID, the term frequency, and the term weight.
+Node.py - Node is a class that stores a docID, the term frequency in document <docID>, the term weight, 
+and the vector length of document <docID>.
 
 SPIMI.py - implements SPIMI scalable index construction.
 
@@ -45,10 +71,10 @@ TermDictionary.py - the TermDictionary class, the main object type used to store
 its document frequency, and the pointer to fetch its postings in the postings file.
 
 dictionary.txt - saved output of dictionary information of TermDictionary: contains terms, their document
-frequency as well as their pointer.
+frequency as well as their pointer. It also contains a special key, "d0cum3ntL3ngth", whose value is a pointer to 
+a dictionary whose key-value pair is docID : docLength.
 
-postings.txt - saved output of list of Nodes, where each Node contains a docID, the term frequency, the
-term weight, and the vector length.
+postings.txt - saved output of list of Nodes objects, as well as a dictionary whose key-pair value is docID : docLength.
 
 
 == Statement of individual work ==
