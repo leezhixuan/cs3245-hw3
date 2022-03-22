@@ -42,7 +42,7 @@ The dictionary in the TermDictionary object will be in the form of:
 We preprocess terms in queries the same way we preprocess words in the corpus (only stemming and case-folding) so that we
 will be able to search effectively. In CosineScores(), we also calculate score of each document based on lnc.ltc 
 (in terms of SMART notation of ddd.qqq). As such, weights of query terms are determined using (1 + log10(tf)) * idf, with cosine normalisation.
-For each query term, we add (QueryTermWeight * DocumentTermWeight) / docVectorLength to the score of every document in its postings list. 
+For each query term, we add (normalisedQueryTermWeight * DocumentTermWeight) / docVectorLength to the score of every document in its postings list. 
 At the end, every document would have obtained a score. The higher the score, the more relevant that particular document is to the query.
 
 In order to rank and output the top 10 most relevant documents to the query, we utilise the heapq library as well as the Document class.

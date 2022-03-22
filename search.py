@@ -27,10 +27,18 @@ def run_search(dict_file, postings_file, queries_file, results_file):
 
     with open(queries_file, 'r') as queryFile:
         with open(results_file, 'w') as resultFile:
-            
+            allResults = []
+
             for query in queryFile:
-                result = cosineScores(query, dictFile, postings_file)
-                resultFile.write(result + "\n")
+                if query.strip():
+                    result = cosineScores(query, dictFile, postings_file)
+                    allResults.append(result)
+
+                else:
+                    allResults.append("")
+
+            outputResult = "\n".join(allResults) # to output all result onto a new line.
+            resultFile.write(outputResult)
 
 
 def retrievePostingsList(file, pointer):
@@ -59,8 +67,10 @@ def cosineScores(query, dictionary, postingsFile):
     queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
     qTokenFrequency = Counter(queryTokens) # qTokenFrequency will be in the form of {"the": 2, "and" : 1} if the query is "the and the".
     qToken_tfidfWeights = {term : computeTFIDF(term, frequency, dictionary, totalNumberOfDocs) for term, frequency in qTokenFrequency.items()}
+    queryLength = math.sqrt(sum([math.pow(weight, 2) for weight in qToken_tfidfWeights.values()]))
+    qTokenNormalisedWeights = {term : normaliseWeight(weight,queryLength) for term, weight in qToken_tfidfWeights.items()}
  
-    for term in qToken_tfidfWeights.keys():
+    for term in qTokenNormalisedWeights.keys():
         pointer = dictionary.getTermPointer(term)
         postings = retrievePostingsList(postingsFile, pointer) # in the form of (docID, TermFreq, skipPointer (to be discarded))
 
@@ -68,7 +78,7 @@ def cosineScores(query, dictionary, postingsFile):
             docID = node.getDocID()
             termWeight = node.getTermWeight()
             docVectorLength = node.getVectorDocLength()
-            result[docID] += (qToken_tfidfWeights[term] * termWeight) / docVectorLength # update with normalised score
+            result[docID] += normaliseWeight(qTokenNormalisedWeights[term] * termWeight,  docVectorLength) # update with normalised score
     
     # documents and their weights are now settled.
 
@@ -76,6 +86,16 @@ def cosineScores(query, dictionary, postingsFile):
     output = extractTop10(documentObjects)
 
     return " ".join([str(document) for document in output])
+
+def normaliseWeight(weight, vectorLength):
+    """
+    Given a weight, divide it by the given vectorLength to normalise.
+    """
+    if vectorLength == 0: # avoids division by 0
+        return 0
+
+    else:
+        return weight / vectorLength
 
 
 def computeTFIDF(term, frequency, dictionary, totalNumberOfDocs):
