@@ -59,10 +59,8 @@ def cosineScores(query, dictionary, postingsFile):
     queryTokens = [stemmer.stem(token.lower()) for token in query.split()]
     qTokenFrequency = Counter(queryTokens) # qTokenFrequency will be in the form of {"the": 2, "and" : 1} if the query is "the and the".
     qToken_tfidfWeights = {term : computeTFIDF(term, frequency, dictionary, totalNumberOfDocs) for term, frequency in qTokenFrequency.items()}
-    queryLength = math.sqrt(sum([math.pow(weight, 2) for weight in qToken_tfidfWeights.values()]))
-    qTokenNormalisedWeights = {term : weight / queryLength for term, weight in qToken_tfidfWeights.items()}
-
-    for term in qTokenNormalisedWeights.keys():
+ 
+    for term in qToken_tfidfWeights.keys():
         pointer = dictionary.getTermPointer(term)
         postings = retrievePostingsList(postingsFile, pointer) # in the form of (docID, TermFreq, skipPointer (to be discarded))
 
@@ -70,13 +68,11 @@ def cosineScores(query, dictionary, postingsFile):
             docID = node.getDocID()
             termWeight = node.getTermWeight()
             docVectorLength = node.getVectorDocLength()
-            result[docID] += (qTokenNormalisedWeights[term] * termWeight) / docVectorLength # update with normalised score
+            result[docID] += (qToken_tfidfWeights[term] * termWeight) / docVectorLength # update with normalised score
     
     # documents and their weights are now settled.
 
     documentObjects = generateDocumentObjects(result)
-
-    # output = heapq.nlargest(10, documentObjects) # get the top 10 highest ranking solution.
     output = extractTop10(documentObjects)
 
     return " ".join([str(document) for document in output])
